@@ -126,6 +126,125 @@
       color: #4a7550;
       text-align: center;
     }
+
+    /* ── Passcode gate ───────────────────────────────────────────── */
+    #ar-gate {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(8, 20, 9, 0.92);
+      backdrop-filter: blur(6px);
+      z-index: 9999;
+      justify-content: center;
+      align-items: center;
+    }
+    #ar-gate.active { display: flex; }
+
+    .gate-card {
+      background: #1b3a1f;
+      border: 1px solid #2e5c34;
+      border-radius: 20px;
+      padding: 32px 28px;
+      width: min(340px, 90vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 18px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+    }
+    .gate-icon {
+      width: 52px; height: 52px;
+      background: #2e5c34;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.6rem;
+    }
+    .gate-card h2 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #e8f5e9;
+      text-align: center;
+    }
+    .gate-card p {
+      font-size: 0.8rem;
+      color: #81c784;
+      text-align: center;
+      line-height: 1.5;
+    }
+    .gate-input {
+      width: 100%;
+      background: #0d1f0f;
+      border: 1.5px solid #2e5c34;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 1.2rem;
+      letter-spacing: 0.3em;
+      text-align: center;
+      color: #e8f5e9;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .gate-input:focus { border-color: #4caf50; }
+    .gate-input.error  { border-color: #e53935; animation: shake 0.3s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25%      { transform: translateX(-6px); }
+      75%      { transform: translateX(6px); }
+    }
+    .gate-error {
+      font-size: 0.78rem;
+      color: #ef9a9a;
+      min-height: 1em;
+      text-align: center;
+    }
+    .gate-actions {
+      display: flex; gap: 10px; width: 100%;
+    }
+    .btn-cancel {
+      flex: 1;
+      background: transparent;
+      border: 1.5px solid #2e5c34;
+      border-radius: 10px;
+      padding: 11px;
+      color: #81c784;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-cancel:hover { background: #0d1f0f; }
+    .btn-confirm {
+      flex: 2;
+      background: #4caf50;
+      border: none;
+      border-radius: 10px;
+      padding: 11px;
+      color: #fff;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn-confirm:hover { background: #43a047; }
+
+    /* Visible AR trigger button (replaces the slotted one) */
+    #open-gate-btn {
+      position: absolute;
+      bottom: 16px; right: 16px;
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 22px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(76,175,80,0.45);
+      z-index: 10;
+    }
+    #open-gate-btn svg { width: 20px; height: 20px; fill:#fff; }
   </style>
 </head>
 <body>
@@ -167,8 +286,11 @@
       camera-target="0m 1.8m 0m"
     >
 
-      <!-- AR launch button (shown on mobile only by model-viewer) -->
-      <button class="ar-button" slot="ar-button">
+      <!-- Hidden real AR trigger - called programmatically after code check -->
+      <button id="real-ar-btn" slot="ar-button" style="display:none;">AR</button>
+
+      <!-- Visible gate trigger -->
+      <button id="open-gate-btn">
         <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21
                    17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2
@@ -203,5 +325,80 @@
 
   <footer>GEM Sampling Protocol · model-viewer AR · open in Chrome (Android) or Safari (iOS)</footer>
 
+
+  <!-- ── Passcode gate overlay ───────────────────────────────────── -->
+  <div id="ar-gate" role="dialog" aria-modal="true" aria-label="Access code required">
+    <div class="gate-card">
+      <div class="gate-icon">🔒</div>
+      <h2>Enter Access Code</h2>
+      <p>This AR experience is restricted.<br>Enter the code provided by your field team.</p>
+      <input
+        id="gate-input"
+        class="gate-input"
+        type="password"
+        inputmode="numeric"
+        maxlength="8"
+        placeholder="••••"
+        autocomplete="off"
+      />
+      <div class="gate-error" id="gate-error"></div>
+      <div class="gate-actions">
+        <button class="btn-cancel" id="gate-cancel">Cancel</button>
+        <button class="btn-confirm" id="gate-confirm">Launch AR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visible "View in AR" button that triggers the gate -->
+  <script>
+    // ── CONFIG: set your access code here ──────────────────────────
+    const ACCESS_CODE = "GEM2024";
+    // ───────────────────────────────────────────────────────────────
+
+    const gate      = document.getElementById("ar-gate");
+    const input     = document.getElementById("gate-input");
+    const errorMsg  = document.getElementById("gate-error");
+    const realBtn   = document.getElementById("real-ar-btn");
+    const viewer    = document.querySelector("model-viewer");
+
+    // Inject the visible button into the model-viewer shadow DOM area
+    const triggerBtn = document.getElementById("open-gate-btn");
+
+    function openGate() {
+      input.value = "";
+      errorMsg.textContent = "";
+      input.classList.remove("error");
+      gate.classList.add("active");
+      setTimeout(() => input.focus(), 100);
+    }
+
+    function closeGate() {
+      gate.classList.remove("active");
+    }
+
+    function confirm() {
+      if (input.value === ACCESS_CODE) {
+        closeGate();
+        // Programmatically trigger the hidden real AR button
+        realBtn.click();
+      } else {
+        errorMsg.textContent = "Incorrect code. Please try again.";
+        input.classList.add("error");
+        input.value = "";
+        setTimeout(() => input.classList.remove("error"), 400);
+        setTimeout(() => input.focus(), 50);
+      }
+    }
+
+    document.getElementById("open-gate-btn").addEventListener("click", openGate);
+    document.getElementById("gate-cancel").addEventListener("click", closeGate);
+    document.getElementById("gate-confirm").addEventListener("click", confirm);
+
+    // Allow Enter key to confirm
+    input.addEventListener("keydown", e => { if (e.key === "Enter") confirm(); });
+
+    // Close gate if user taps outside the card
+    gate.addEventListener("click", e => { if (e.target === gate) closeGate(); });
+  </script>
 </body>
 </html>
