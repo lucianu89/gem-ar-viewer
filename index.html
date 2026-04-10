@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GEM Sampling Design – AR Viewer</title>
+
+  <!-- Google model-viewer (handles WebXR on Android, Quick Look on iOS) -->
+  <script type="module"
+    src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+  </script>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0d1f0f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #e8f5e9;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      padding: 14px 20px;
+      background: #1b3a1f;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    }
+    header .dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #4caf50;
+      box-shadow: 0 0 8px #4caf50;
+    }
+    header h1 {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    header p {
+      font-size: 0.75rem;
+      color: #81c784;
+      margin-top: 1px;
+    }
+
+    .viewer-wrap {
+      width: 100%;
+      max-width: 900px;
+      padding: 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    model-viewer {
+      width: 100%;
+      height: 70vh;
+      border-radius: 16px;
+      border: 1px solid #2e5c34;
+      background: #111f13;
+      --progress-bar-color: #4caf50;
+      --progress-mask: #0d1f0f;
+    }
+
+    /* AR button that floats over the viewer */
+    .ar-button {
+      background: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 22px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(76,175,80,0.45);
+      transition: background 0.2s;
+    }
+    .ar-button:hover { background: #43a047; }
+    .ar-button svg { width: 20px; height: 20px; fill: #fff; }
+
+    /* model-viewer slots the AR button via slot="ar-button" */
+    [slot="ar-button"] {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+    }
+
+    .info-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .badge {
+      background: #1b3a1f;
+      border: 1px solid #2e5c34;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.78rem;
+      color: #a5d6a7;
+    }
+
+    .instructions {
+      background: #1b3a1f;
+      border: 1px solid #2e5c34;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      color: #c8e6c9;
+    }
+    .instructions strong { color: #4caf50; }
+
+    footer {
+      padding: 16px;
+      font-size: 0.72rem;
+      color: #4a7550;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="dot"></div>
+    <div>
+      <h1>GEM Field Sampling Design</h1>
+      <p>50 × 50 m savanna plot · 9 sampling protocols</p>
+    </div>
+  </header>
+
+  <div class="viewer-wrap">
+
+    <model-viewer
+      src="Claude_GEM.glb"
+      alt="GEM 50x50m savanna sampling plot"
+
+      ar
+      ar-modes="webxr scene-viewer quick-look"
+      ar-scale="fixed"
+
+      camera-controls
+      auto-rotate
+      auto-rotate-delay="3000"
+      rotation-per-second="8deg"
+
+      shadow-intensity="1"
+      shadow-softness="0.8"
+      exposure="1.1"
+
+      camera-orbit="-30deg 70deg 120m"
+      min-camera-orbit="auto auto 10m"
+      max-camera-orbit="auto auto 300m"
+
+      interaction-prompt="auto"
+    >
+
+      <!-- AR launch button (shown on mobile only by model-viewer) -->
+      <button class="ar-button" slot="ar-button">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21
+                   17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2
+                   M12 8l4 2.5v5L12 18l-4-2.5v-5z"/>
+        </svg>
+        View in AR
+      </button>
+
+    </model-viewer>
+
+    <div class="info-bar">
+      <span class="badge">📐 50 × 50 m plot</span>
+      <span class="badge">🌳 Trees (§5.1)</span>
+      <span class="badge">🌿 Grass cages (§5.2)</span>
+      <span class="badge">🪱 Root cores (§5.3)</span>
+      <span class="badge">🍂 Litterfall (§5.4)</span>
+      <span class="badge">🪵 CWD (§5.5)</span>
+      <span class="badge">🪨 Soil sampling (§5.6)</span>
+      <span class="badge">🌱 Diversity quads (§5.7)</span>
+      <span class="badge">💨 Respiration (§5.8)</span>
+      <span class="badge">🧫 Decomposition (§5.9)</span>
+    </div>
+
+    <div class="instructions">
+      <strong>On desktop:</strong> drag to rotate · scroll to zoom · right-click to pan<br>
+      <strong>On Android:</strong> tap <em>View in AR</em> → point at a flat surface → place the plot<br>
+      <strong>On iPhone/iPad:</strong> tap <em>View in AR</em> → Quick Look opens automatically<br>
+      <strong>Tip:</strong> try placing the 50 m plot on a table or floor for best scale reference
+    </div>
+
+  </div>
+
+  <footer>GEM Sampling Protocol · model-viewer AR · open in Chrome (Android) or Safari (iOS)</footer>
+
+</body>
+</html>
